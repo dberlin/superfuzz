@@ -66,7 +66,9 @@ int main(int argc, const char *argv[]) {
     auto new_type = new Class(class_i);
     if (int num_pbases = types.size()) {
       // fill potential_bases with the range [0, num_pbases]
-      std::iota(potential_bases, potential_bases + num_pbases, 0);
+      for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
+        potential_bases[pbase_i] = pbase_i;
+      }
       // randomize the order of which potential bases to inherit from
       std::shuffle(potential_bases, potential_bases + num_pbases, generator);
       for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
