@@ -90,7 +90,7 @@ struct Class {
 
   Class(int ci) : class_i(ci), alignment(-1), packed(-1) {}
 
-  bool can_inherit(int pbase) const;
+  bool is_viable_base(int new_base) const;
 
   void add_base(int base, bool is_virtual);
 

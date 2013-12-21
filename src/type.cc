@@ -41,25 +41,26 @@ bool Class::has_base(int base, bool is_virtual) const {
     return direct_nvbases.count(base) != 0 || indirect_nvbases.count(base) != 0;
   }
 }
-bool Class::can_inherit(int pbase) const {
-  Class *pbase_type = types[pbase];
+
+bool Class::is_viable_base(int new_base) const {
+  Class *new_base_class = types[new_base];
   for (int direct_base : direct_bases) {
     if (direct_vbases.count(direct_base) != 0) {
-      if (pbase_type->has_base(direct_base, /*is_virtual=*/false)) {
+      if (new_base_class->has_base(direct_base, /*is_virtual=*/false)) {
         return false;
       }
     } else {
-      if (pbase_type->has_base(direct_base, /*is_virtual=*/true)) {
+      if (new_base_class->has_base(direct_base, /*is_virtual=*/true)) {
         return false;
       }
     }
 
     if (indirect_nvbases.count(direct_base) != 0 &&
-        pbase_type->has_base(direct_base, /*is_virtual=*/true)) {
+        new_base_class->has_base(direct_base, /*is_virtual=*/true)) {
       return false;
     }
     if (indirect_vbases.count(direct_base) != 0 &&
-        pbase_type->has_base(direct_base, /*is_virtual=*/false)) {
+        new_base_class->has_base(direct_base, /*is_virtual=*/false)) {
       return false;
     }
   }

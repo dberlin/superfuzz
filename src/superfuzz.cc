@@ -73,7 +73,7 @@ int main(int argc, const char *argv[]) {
       std::shuffle(potential_bases, potential_bases + num_pbases, generator);
       for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
         int pbase = potential_bases[pbase_i];
-        if (!new_type->can_inherit(pbase)) {
+        if (!new_type->is_viable_base(pbase)) {
           continue;
         }
 
