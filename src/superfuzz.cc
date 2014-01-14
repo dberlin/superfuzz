@@ -72,15 +72,17 @@ int main(int argc, const char *argv[]) {
       // randomize the order of which potential bases to inherit from
       std::shuffle(potential_bases, potential_bases + num_pbases, generator);
       for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
+        if (percent(generator) > chance_of_base) {
+          continue;
+        }
+
         int pbase = potential_bases[pbase_i];
         if (!new_type->is_viable_base(pbase)) {
           continue;
         }
 
-        if (percent(generator) <= chance_of_base) {
-          bool is_virtual = percent(generator) <= chance_of_vbase;
-          new_type->add_base(pbase, is_virtual);
-        }
+        bool is_virtual = percent(generator) <= chance_of_vbase;
+        new_type->add_base(pbase, is_virtual);
       }
     }
 
