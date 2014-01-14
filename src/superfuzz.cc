@@ -61,22 +61,22 @@ int main(int argc, const char *argv[]) {
   std::cout << "extern \"C\" void *memset(void *ptr, int value, size_t num);\n";
   std::cout << "static char buffer[419430400];\n";
   std::cout << "inline void *operator new(size_t, void *pv) { return pv; }\n";
-  auto potential_bases = new int[num_classes];
+  auto shuffled_classes = new int[num_classes];
   for (int class_i = 0; class_i < num_classes; ++class_i) {
     auto new_type = new Class(class_i);
     if (int num_pbases = types.size()) {
-      // fill potential_bases with the range [0, num_pbases]
+      // fill shuffled_classes with the range [0, num_pbases]
       for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
-        potential_bases[pbase_i] = pbase_i;
+        shuffled_classes[pbase_i] = pbase_i;
       }
       // randomize the order of which potential bases to inherit from
-      std::shuffle(potential_bases, potential_bases + num_pbases, generator);
+      std::shuffle(shuffled_classes, shuffled_classes + num_pbases, generator);
       for (int pbase_i = 0; pbase_i < num_pbases; ++pbase_i) {
         if (percent(generator) > chance_of_base) {
           continue;
         }
 
-        int pbase = potential_bases[pbase_i];
+        int pbase = shuffled_classes[pbase_i];
         if (!new_type->is_viable_base(pbase)) {
           continue;
         }
@@ -180,8 +180,15 @@ int main(int argc, const char *argv[]) {
   std::cout << "#define test(Class) init_mem<Class>(), test_layout(#Class, sizeof(Class), __alignof(Class))\n";
 
   std::cout << "int main() {\n";
-  for (auto type : types) {
-    std::cout << "\ttest(" << type->get_class_name() << ");\n";
+
+  // fill shuffled_classes with the range [0, num_pbases]
+  for (int class_i = 0; class_i < num_classes; ++class_i) {
+    shuffled_classes[class_i] = class_i;
+  }
+  // randomize the order of which potential bases to inherit from
+  std::shuffle(shuffled_classes, shuffled_classes + num_classes, generator);
+  for (int class_i = 0; class_i < num_classes; ++class_i) {
+    std::cout << "\ttest(" << types[shuffled_classes[class_i]]->get_class_name() << ");\n";
   }
 
   std::cout << "}\n";
