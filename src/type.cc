@@ -73,7 +73,11 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
 
   stream << "struct ";
   if (type.alignment > -1) {
-    stream << " __declspec(align(" << type.alignment << ")) ";
+    if (type.gnu_alignment_spelling) {
+      stream << " __attribute__ ((aligned (" << type.alignment << "))) ";
+    } else {
+      stream << " __declspec(align(" << type.alignment << ")) ";
+    }
   }
   stream << type.get_class_name();
   std::string base_clause;
@@ -120,7 +124,11 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
 
 std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
   if (field.alignment > -1) {
-    stream << "__declspec(align(" << field.alignment << ")) ";
+    if (field.gnu_alignment_spelling) {
+      stream << " __attribute__ ((aligned (" << field.alignment << "))) ";
+    } else {
+      stream << "__declspec(align(" << field.alignment << ")) ";
+    }
   }
 
   switch (field.type) {
@@ -134,6 +142,8 @@ std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
     case TypeKind_Class:
       stream << types[field.type_class]->get_class_name();
       break;
+    case TypeKind_PDM:
+      stream << "int " << types[field.type_class]->get_class_name() << "::*";
   }
   if (!field.is_anonymous) {
     stream << ' ' << field.get_field_name();

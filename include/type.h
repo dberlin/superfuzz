@@ -4,7 +4,6 @@
 #include <vector>
 
 enum TypeKind {
-  TypeKind_First,
   TypeKind_Bool,
   TypeKind_Char,
   TypeKind_Short,
@@ -13,7 +12,7 @@ enum TypeKind {
   TypeKind_Float,
   TypeKind_Double,
   TypeKind_Class,
-  TypeKind_Last
+  TypeKind_PDM,
 };
 
 extern std::vector<struct Class *> types;
@@ -28,9 +27,16 @@ struct Class {
     int alignment;
     int type_class;
     bool is_anonymous;
+    bool gnu_alignment_spelling;
     Field(TypeKind ty, int fi, int ci)
-        : type(ty), field_i(fi), class_i(ci), bitfield_width(-1), alignment(-1),
-          type_class(-1), is_anonymous(false) {}
+        : type(ty),
+          field_i(fi),
+          class_i(ci),
+          bitfield_width(-1),
+          alignment(-1),
+          type_class(-1),
+          is_anonymous(false),
+          gnu_alignment_spelling(false) {}
 
     Field &add_array_dimension(int array_dimension) {
       array_dimensions.push_back(array_dimension);
@@ -57,8 +63,9 @@ struct Class {
       return *this;
     }
 
-    Field &set_alignment(int align) {
+    Field &set_alignment(int align, bool gnu_style) {
       alignment = align;
+      gnu_alignment_spelling = gnu_style;
       return *this;
     }
 
@@ -87,8 +94,10 @@ struct Class {
   int class_i;
   int alignment;
   int packed;
+  bool gnu_alignment_spelling;
 
-  Class(int ci) : class_i(ci), alignment(-1), packed(-1) {}
+  Class(int ci)
+      : class_i(ci), alignment(-1), packed(-1), gnu_alignment_spelling(false) {}
 
   bool is_viable_base(int new_base) const;
 
@@ -105,8 +114,9 @@ struct Class {
     packed = pack;
   }
 
-  void set_alignment(int align) {
+  void set_alignment(int align, bool gnu_style) {
     alignment = align;
+    gnu_alignment_spelling = gnu_style;
   }
 
   void add_method(std::string method_name) {

@@ -25,6 +25,7 @@ static Option<int> chance_of_class_aligned("chance-of-class-aligned", 10);
 static Option<int> chance_of_class_packed("chance-of-class-packed", 10);
 static Option<int> chance_of_field_aligned("chance-of-field-aligned", 10);
 static Option<bool> check_vptrs("check-vptrs", false);
+static Option<bool> gnu_dialect("gnu-dialect", false);
 static Option<bool> show_help("help", false);
 
 int main(int argc, const char *argv[]) {
@@ -41,8 +42,6 @@ int main(int argc, const char *argv[]) {
                                                       max_num_fields);
   std::poisson_distribution<int> field_array_elt_dist(avg_num_array_elements);
   std::uniform_int_distribution<int> percent(1, 100);
-  std::uniform_int_distribution<int> field_type_dist(TypeKind_First + 1,
-                                                     TypeKind_Last - 1);
   std::uniform_int_distribution<int> field_alignment_pow2(0, 13);
   std::uniform_int_distribution<int> class_alignment_pow2(0, 13);
   std::uniform_int_distribution<int> class_packed_pow2(0, 4);
@@ -57,8 +56,8 @@ int main(int argc, const char *argv[]) {
     std::cout << "extern \"C\" __declspec(dllimport) int __stdcall "
                  "IsBadReadPtr(const void *, size_t);\n";
   }
-  std::cout << "extern \"C\" int printf(const char *fmt, ...);\n";
-  std::cout << "extern \"C\" void *memset(void *ptr, int value, size_t num);\n";
+  std::cout << "extern \"C\" int printf(const char *, ...);\n";
+  std::cout << "extern \"C\" void *memset(void *, int, size_t);\n";
   std::cout << "static char buffer[419430400];\n";
   std::cout << "inline void *operator new(size_t, void *pv) { return pv; }\n";
   auto shuffled_classes = new int[num_classes];
@@ -77,7 +76,7 @@ int main(int argc, const char *argv[]) {
         }
 
         int pbase = shuffled_classes[pbase_i];
-        if (!new_type->is_viable_base(pbase)) {
+        if (!gnu_dialect && !new_type->is_viable_base(pbase)) {
           continue;
         }
 
@@ -88,15 +87,13 @@ int main(int argc, const char *argv[]) {
 
     int num_fields = field_count_dist(generator);
     for (int field_i = 0; field_i < num_fields; ++field_i) {
+      std::uniform_int_distribution<int> field_type_dist(
+          TypeKind_Bool, types.empty() ? TypeKind_Double : TypeKind_PDM);
       int field_type = field_type_dist(generator);
       int type_class = -1;
-      if (field_type == TypeKind_Class) {
-        if (types.empty()) {
-          field_type = TypeKind_Int;
-        } else {
-          std::uniform_int_distribution<int> type_dist(0, types.size()-1);
-          type_class = type_dist(generator);
-        }
+      if (field_type == TypeKind_Class || field_type == TypeKind_PDM) {
+        std::uniform_int_distribution<int> type_dist(0, types.size()-1);
+        type_class = type_dist(generator);
       }
       auto &field = new_type->add_field((TypeKind)field_type);
       field.set_type_class(type_class);
@@ -116,7 +113,7 @@ int main(int argc, const char *argv[]) {
       if (percent(generator) <= chance_of_field_aligned) {
         do {
           int field_alignment = 1 << field_alignment_pow2(generator);
-          field.set_alignment(field_alignment);
+          field.set_alignment(field_alignment, gnu_dialect);
         } while (percent(generator) <= chance_of_field_aligned);
       }
     }
@@ -132,7 +129,7 @@ int main(int argc, const char *argv[]) {
     }
     if (percent(generator) <= chance_of_class_aligned) {
       int align = 1 << class_alignment_pow2(generator);
-      new_type->set_alignment(align);
+      new_type->set_alignment(align, gnu_dialect);
     }
     types.push_back(new_type);
   }
@@ -167,8 +164,13 @@ int main(int argc, const char *argv[]) {
     std::cout << "\t\t}\n";
     std::cout << "\t}\n";
   }
-  std::cout << "\tprintf(\"   sizeof(%s): %Iu\\n\", class_name, size_of_class);\n";
-  std::cout << "\tprintf(\"__alignof(%s): %Iu\\n\", class_name, align_of_class);\n";
+  if (gnu_dialect) {
+    std::cout << "\tprintf(\"     sizeof(%s): %zu\\n\", class_name, size_of_class);\n";
+    std::cout << "\tprintf(\"__alignof__(%s): %zu\\n\", class_name, align_of_class);\n";
+  } else {
+    std::cout << "\tprintf(\"   sizeof(%s): %Iu\\n\", class_name, size_of_class);\n";
+    std::cout << "\tprintf(\"__alignof(%s): %Iu\\n\", class_name, align_of_class);\n";
+  }
   std::cout << "}\n";
 
   std::cout << "template <typename Class>\n";
