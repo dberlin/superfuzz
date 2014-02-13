@@ -67,6 +67,9 @@ bool Class::is_viable_base(int new_base) const {
   return true;
 }
 std::ostream &operator<<(std::ostream &stream, const Class &type) {
+  if (type.vtordisp > -1) {
+    stream << "#pragma vtordisp(" << type.vtordisp << ")\n";
+  }
   if (type.packed > -1) {
     stream << "#pragma pack(push, " << type.packed << ")\n";
   }
@@ -118,6 +121,9 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
   if (type.packed > -1) {
     stream << "#pragma pack(pop)\n";
   }
+  if (type.vtordisp > -1) {
+    stream << "#pragma vtordisp()\n";
+  }
 
   return stream;
 }
@@ -142,11 +148,18 @@ std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
     case TypeKind_Class:
       stream << types[field.type_class]->get_class_name();
       break;
+    case TypeKind_PMF:
+      stream << "int (" << types[field.type_class]->get_class_name() << "::*";
+      break;
     case TypeKind_PDM:
       stream << "int " << types[field.type_class]->get_class_name() << "::*";
+      break;
   }
   if (!field.is_anonymous) {
     stream << ' ' << field.get_field_name();
+  }
+  if (field.type == TypeKind_PMF) {
+    stream << ')';
   }
   for (auto dim : field.array_dimensions) {
     stream << '[' << dim << ']';

@@ -23,6 +23,7 @@ static Option<int> chance_of_own_method("chance-of-own-method", 20);
 static Option<int> chance_of_override_method("chance-of-override-method", 20);
 static Option<int> chance_of_class_aligned("chance-of-class-aligned", 10);
 static Option<int> chance_of_class_packed("chance-of-class-packed", 10);
+static Option<int> chance_of_class_vtordisp("chance-of-vtordisp-packed", 10);
 static Option<int> chance_of_field_aligned("chance-of-field-aligned", 10);
 static Option<bool> check_vptrs("check-vptrs", false);
 static Option<bool> gnu_dialect("gnu-dialect", false);
@@ -45,6 +46,7 @@ int main(int argc, const char *argv[]) {
   std::uniform_int_distribution<int> field_alignment_pow2(0, 13);
   std::uniform_int_distribution<int> class_alignment_pow2(0, 13);
   std::uniform_int_distribution<int> class_packed_pow2(0, 4);
+  std::uniform_int_distribution<int> class_vtordisp(0, 2);
 
   std::cout << "#if defined(__clang__) || defined(__GNUC__)\n";
   std::cout << "typedef __SIZE_TYPE__ size_t;\n";
@@ -91,7 +93,7 @@ int main(int argc, const char *argv[]) {
           TypeKind_Bool, types.empty() ? TypeKind_Double : TypeKind_PDM);
       int field_type = field_type_dist(generator);
       int type_class = -1;
-      if (field_type == TypeKind_Class || field_type == TypeKind_PDM) {
+      if (field_type >= TypeKind_Class) {
         std::uniform_int_distribution<int> type_dist(0, types.size()-1);
         type_class = type_dist(generator);
       }
@@ -126,6 +128,10 @@ int main(int argc, const char *argv[]) {
     if (percent(generator) <= chance_of_class_packed) {
       int packed = 1 << class_packed_pow2(generator);
       new_type->set_packed(packed);
+    }
+    if (percent(generator) <= chance_of_class_vtordisp) {
+      int vtordisp = class_vtordisp(generator);
+      new_type->set_vtordisp(vtordisp);
     }
     if (percent(generator) <= chance_of_class_aligned) {
       int align = 1 << class_alignment_pow2(generator);

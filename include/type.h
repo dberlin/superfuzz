@@ -12,6 +12,7 @@ enum TypeKind {
   TypeKind_Float,
   TypeKind_Double,
   TypeKind_Class,
+  TypeKind_PMF,
   TypeKind_PDM,
 };
 
@@ -94,10 +95,15 @@ struct Class {
   int class_i;
   int alignment;
   int packed;
+  int vtordisp;
   bool gnu_alignment_spelling;
 
   Class(int ci)
-      : class_i(ci), alignment(-1), packed(-1), gnu_alignment_spelling(false) {}
+      : class_i(ci),
+        alignment(-1),
+        packed(-1),
+        vtordisp(-1),
+        gnu_alignment_spelling(false) {}
 
   bool is_viable_base(int new_base) const;
 
@@ -112,6 +118,10 @@ struct Class {
 
   void set_packed(int pack) {
     packed = pack;
+  }
+
+  void set_vtordisp(int disp) {
+    vtordisp = disp;
   }
 
   void set_alignment(int align, bool gnu_style) {
