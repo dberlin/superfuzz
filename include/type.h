@@ -94,9 +94,11 @@ struct Class {
   std::vector<Field *> fields;
   struct Method {
     std::string name;
-    TypeKind type;
-    int type_class;
+    TypeKind ret_type;
+    int ret_type_class;
     bool is_virtual;
+    TypeKind arg_type;
+    int arg_type_class;
     friend std::ostream &operator<<(std::ostream &stream, const Method &method);
   };
   std::vector<Method> methods;

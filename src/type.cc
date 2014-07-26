@@ -178,7 +178,7 @@ std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
   if (method.is_virtual) {
     stream << "virtual ";
   }
-  switch (method.type) {
+  switch (method.ret_type) {
     case TypeKind_Bool:     stream << "bool";      break;
     case TypeKind_Char:     stream << "char";      break;
     case TypeKind_Short:    stream << "short";     break;
@@ -187,24 +187,46 @@ std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
     case TypeKind_Float:    stream << "float";     break;
     case TypeKind_Double:   stream << "double";    break;
     case TypeKind_PClass:
-      stream << types[method.type_class]->get_class_name() << '*';
+      stream << types[method.ret_type_class]->get_class_name() << '*';
       break;
     case TypeKind_PMF:
-      stream << "int (" << types[method.type_class]->get_class_name() << "::*";
+      stream << "int (" << types[method.ret_type_class]->get_class_name() << "::*";
       break;
     case TypeKind_PDM:
-      stream << "int " << types[method.type_class]->get_class_name() << "::*";
+      stream << "int " << types[method.ret_type_class]->get_class_name() << "::*";
       break;
     case TypeKind_Class:
-      stream << types[method.type_class]->get_class_name();
+      stream << types[method.ret_type_class]->get_class_name();
       break;
   }
-  stream << ' ' << method.name << "()";
-  if (method.type == TypeKind_PMF) {
+  stream << ' ' << method.name << '(';
+  switch (method.arg_type) {
+    case TypeKind_Bool:     stream << "bool";      break;
+    case TypeKind_Char:     stream << "char";      break;
+    case TypeKind_Short:    stream << "short";     break;
+    case TypeKind_Int:      stream << "int";       break;
+    case TypeKind_LongLong: stream << "long long"; break;
+    case TypeKind_Float:    stream << "float";     break;
+    case TypeKind_Double:   stream << "double";    break;
+    case TypeKind_PClass:
+      stream << types[method.arg_type_class]->get_class_name() << '*';
+      break;
+    case TypeKind_PMF:
+      stream << "int (" << types[method.arg_type_class]->get_class_name() << "::*)";
+      break;
+    case TypeKind_PDM:
+      stream << "int " << types[method.arg_type_class]->get_class_name() << "::*";
+      break;
+    case TypeKind_Class:
+      stream << types[method.arg_type_class]->get_class_name();
+      break;
+  }
+  stream << ')';
+  if (method.ret_type == TypeKind_PMF) {
     stream << ')';
   }
   stream << "{ return ";
-  switch (method.type) {
+  switch (method.ret_type) {
     case TypeKind_Bool:
     case TypeKind_Char:
     case TypeKind_Short:
@@ -218,7 +240,7 @@ std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
       stream << '0';
       break;
     case TypeKind_Class:
-      stream << types[method.type_class]->get_class_name() << "()";
+      stream << types[method.ret_type_class]->get_class_name() << "()";
       break;
   }
   stream << "; };";

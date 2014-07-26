@@ -140,9 +140,11 @@ int main(int argc, const char *argv[]) {
       }
       Class::Method method;
       method.name = new_type->get_class_name() + "Method";
-      method.type = (TypeKind)ret_type;
-      method.type_class = ret_type_class;
+      method.ret_type = (TypeKind)ret_type;
+      method.ret_type_class = ret_type_class;
       method.is_virtual = true;
+      method.arg_type = TypeKind_Bool;
+      method.arg_type_class = -1;
       new_type->add_method(method);
     }
     if (percent(generator) <= chance_of_override_method) {
@@ -158,9 +160,21 @@ int main(int argc, const char *argv[]) {
       }
       Class::Method method;
       method.name = "OverrideMethod";
-      method.type = (TypeKind)ret_type;
-      method.type_class = ret_type_class;
+      method.ret_type = (TypeKind)ret_type;
+      method.ret_type_class = ret_type_class;
       method.is_virtual = percent(generator) <= chance_of_virt_override;
+      int arg_type = ret_type_dist(generator);
+      int arg_type_class = -1;
+      if (arg_type >= TypeKind_PClass) {
+        if (arg_type == TypeKind_Class && types.size() == 1)
+          arg_type = TypeKind_PClass;
+        std::uniform_int_distribution<int> arg_type_class_dist(
+            0,
+            arg_type == TypeKind_Class ? types.size() - 2 : types.size() - 1);
+        arg_type_class = arg_type_class_dist(generator);
+      }
+      method.arg_type = (TypeKind)arg_type;
+      method.arg_type_class = arg_type_class;
       new_type->add_method(method);
     }
     if (percent(generator) <= chance_of_class_packed) {
