@@ -21,6 +21,7 @@ static Option<int> chance_of_anon_field("chance-of-anon-field", 40);
 static Option<int> chance_of_bitfield("chance-of-bitfield", 10);
 static Option<int> chance_of_own_method("chance-of-own-method", 20);
 static Option<int> chance_of_override_method("chance-of-override-method", 20);
+static Option<int> chance_of_virt_override("chance-of-virt-override", 60);
 static Option<int> chance_of_class_aligned("chance-of-class-aligned", 10);
 static Option<int> chance_of_class_packed("chance-of-class-packed", 10);
 static Option<int> chance_of_class_vtordisp("chance-of-vtordisp-packed", 10);
@@ -87,14 +88,19 @@ int main(int argc, const char *argv[]) {
       }
     }
 
+    types.push_back(new_type);
     int num_fields = field_count_dist(generator);
     for (int field_i = 0; field_i < num_fields; ++field_i) {
       std::uniform_int_distribution<int> field_type_dist(
-          TypeKind_Bool, types.empty() ? TypeKind_Double : TypeKind_PDM);
+          TypeKind_Bool, types.empty() ? TypeKind_Double : TypeKind_Class);
       int field_type = field_type_dist(generator);
       int type_class = -1;
-      if (field_type >= TypeKind_Class) {
-        std::uniform_int_distribution<int> type_dist(0, types.size()-1);
+      if (field_type >= TypeKind_PClass) {
+        if (field_type == TypeKind_Class && types.size() == 1)
+          field_type = TypeKind_PClass;
+        std::uniform_int_distribution<int> type_dist(
+            0,
+            field_type == TypeKind_Class ? types.size() - 2 : types.size() - 1);
         type_class = type_dist(generator);
       }
       auto &field = new_type->add_field((TypeKind)field_type);
@@ -119,11 +125,43 @@ int main(int argc, const char *argv[]) {
         } while (percent(generator) <= chance_of_field_aligned);
       }
     }
+    std::uniform_int_distribution<int> ret_type_dist(
+        TypeKind_Bool, types.empty() ? TypeKind_Double : TypeKind_Class);
     if (percent(generator) <= chance_of_own_method) {
-      new_type->add_method(new_type->get_class_name() + "Method");
+      int ret_type = ret_type_dist(generator);
+      int ret_type_class = -1;
+      if (ret_type >= TypeKind_PClass) {
+        if (ret_type == TypeKind_Class && types.size() == 1)
+          ret_type = TypeKind_PClass;
+        std::uniform_int_distribution<int> ret_type_class_dist(
+            0,
+            ret_type == TypeKind_Class ? types.size() - 2 : types.size() - 1);
+        ret_type_class = ret_type_class_dist(generator);
+      }
+      Class::Method method;
+      method.name = new_type->get_class_name() + "Method";
+      method.type = (TypeKind)ret_type;
+      method.type_class = ret_type_class;
+      method.is_virtual = true;
+      new_type->add_method(method);
     }
     if (percent(generator) <= chance_of_override_method) {
-      new_type->add_method("OverrideMethod");
+      int ret_type = ret_type_dist(generator);
+      int ret_type_class = -1;
+      if (ret_type >= TypeKind_PClass) {
+        if (ret_type == TypeKind_Class && types.size() == 1)
+          ret_type = TypeKind_PClass;
+        std::uniform_int_distribution<int> ret_type_class_dist(
+            0,
+            ret_type == TypeKind_Class ? types.size() - 2 : types.size() - 1);
+        ret_type_class = ret_type_class_dist(generator);
+      }
+      Class::Method method;
+      method.name = "OverrideMethod";
+      method.type = (TypeKind)ret_type;
+      method.type_class = ret_type_class;
+      method.is_virtual = percent(generator) <= chance_of_virt_override;
+      new_type->add_method(method);
     }
     if (percent(generator) <= chance_of_class_packed) {
       int packed = 1 << class_packed_pow2(generator);
@@ -137,7 +175,6 @@ int main(int argc, const char *argv[]) {
       int align = 1 << class_alignment_pow2(generator);
       new_type->set_alignment(align, gnu_dialect);
     }
-    types.push_back(new_type);
   }
 
   for (int class_i = 0; class_i < num_classes; ++class_i)

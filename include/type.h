@@ -11,9 +11,10 @@ enum TypeKind {
   TypeKind_LongLong,
   TypeKind_Float,
   TypeKind_Double,
-  TypeKind_Class,
+  TypeKind_PClass,
   TypeKind_PMF,
   TypeKind_PDM,
+  TypeKind_Class,
 };
 
 extern std::vector<struct Class *> types;
@@ -91,7 +92,14 @@ struct Class {
   std::unordered_set<int> direct_nvbases;
   std::vector<int> direct_bases;
   std::vector<Field *> fields;
-  std::vector<std::string> methods;
+  struct Method {
+    std::string name;
+    TypeKind type;
+    int type_class;
+    bool is_virtual;
+    friend std::ostream &operator<<(std::ostream &stream, const Method &method);
+  };
+  std::vector<Method> methods;
   int class_i;
   int alignment;
   int packed;
@@ -129,8 +137,8 @@ struct Class {
     gnu_alignment_spelling = gnu_style;
   }
 
-  void add_method(std::string method_name) {
-    methods.push_back(method_name);
+  void add_method(Method meth) {
+    methods.push_back(meth);
   }
 
   std::string get_class_name() const;

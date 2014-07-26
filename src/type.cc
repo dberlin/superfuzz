@@ -100,8 +100,8 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
     stream << '\t' << *field << '\n';
   }
 
-  for (auto &method_name : type.methods) {
-    stream << "\tvirtual void " << method_name << "() {}\n";
+  for (auto &method : type.methods) {
+    stream << '\t' << method << '\n';
   }
 
   stream << '\t' << type.get_class_name() << "() {\n";
@@ -145,14 +145,17 @@ std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
     case TypeKind_LongLong: stream << "long long"; break;
     case TypeKind_Float:    stream << "float";     break;
     case TypeKind_Double:   stream << "double";    break;
-    case TypeKind_Class:
-      stream << types[field.type_class]->get_class_name();
+    case TypeKind_PClass:
+      stream << types[field.type_class]->get_class_name() << '*';
       break;
     case TypeKind_PMF:
       stream << "int (" << types[field.type_class]->get_class_name() << "::*";
       break;
     case TypeKind_PDM:
       stream << "int " << types[field.type_class]->get_class_name() << "::*";
+      break;
+    case TypeKind_Class:
+      stream << types[field.type_class]->get_class_name();
       break;
   }
   if (!field.is_anonymous) {
@@ -166,6 +169,39 @@ std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
   }
   if (field.bitfield_width > -1) {
     stream << " : " << field.bitfield_width;
+  }
+  stream << ';';
+  return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
+  if (method.is_virtual) {
+    stream << "\tvirtual ";
+  }
+  switch (method.type) {
+    case TypeKind_Bool:     stream << "bool";      break;
+    case TypeKind_Char:     stream << "char";      break;
+    case TypeKind_Short:    stream << "short";     break;
+    case TypeKind_Int:      stream << "int";       break;
+    case TypeKind_LongLong: stream << "long long"; break;
+    case TypeKind_Float:    stream << "float";     break;
+    case TypeKind_Double:   stream << "double";    break;
+    case TypeKind_PClass:
+      stream << types[method.type_class]->get_class_name() << '*';
+      break;
+    case TypeKind_PMF:
+      stream << "int (" << types[method.type_class]->get_class_name() << "::*";
+      break;
+    case TypeKind_PDM:
+      stream << "int " << types[method.type_class]->get_class_name() << "::*";
+      break;
+    case TypeKind_Class:
+      stream << types[method.type_class]->get_class_name();
+      break;
+  }
+  stream << ' ' << method.name << "()";
+  if (method.type == TypeKind_PMF) {
+    stream << ')';
   }
   stream << ';';
   return stream;
