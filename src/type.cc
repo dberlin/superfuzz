@@ -176,7 +176,7 @@ std::ostream &operator<<(std::ostream &stream, const Class::Field &field) {
 
 std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
   if (method.is_virtual) {
-    stream << "\tvirtual ";
+    stream << "virtual ";
   }
   switch (method.type) {
     case TypeKind_Bool:     stream << "bool";      break;
@@ -203,6 +203,24 @@ std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
   if (method.type == TypeKind_PMF) {
     stream << ')';
   }
-  stream << ';';
+  stream << "{ return ";
+  switch (method.type) {
+    case TypeKind_Bool:
+    case TypeKind_Char:
+    case TypeKind_Short:
+    case TypeKind_Int:
+    case TypeKind_LongLong:
+    case TypeKind_Float:
+    case TypeKind_Double:
+    case TypeKind_PClass:
+    case TypeKind_PMF:
+    case TypeKind_PDM:
+      stream << '0';
+      break;
+    case TypeKind_Class:
+      stream << types[method.type_class]->get_class_name() << "()";
+      break;
+  }
+  stream << "; };";
   return stream;
 }
