@@ -96,12 +96,12 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
   base_clause.resize(base_clause.size() - 2);
 
   stream << base_clause << " {\n";
-  for (auto &field : type.fields) {
-    stream << '\t' << *field << '\n';
-  }
-
   for (auto &method : type.methods) {
     stream << '\t' << method << '\n';
+  }
+
+  for (auto &field : type.fields) {
+    stream << '\t' << *field << '\n';
   }
 
   stream << '\t' << type.get_class_name() << "() {\n";
