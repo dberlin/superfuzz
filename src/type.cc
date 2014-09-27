@@ -82,6 +82,9 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
       stream << " __declspec(align(" << type.alignment << ")) ";
     }
   }
+  if (type.has_dllexport) {
+    stream << " __declspec(dllexport) ";
+  }
   stream << type.get_class_name();
   std::string base_clause;
   base_clause.append(": ");
@@ -104,19 +107,23 @@ std::ostream &operator<<(std::ostream &stream, const Class &type) {
     stream << '\t' << *field << '\n';
   }
 
-  stream << '\t' << type.get_class_name() << "() {\n";
-  for (auto field : type.fields) {
-    if (field->is_anonymous) {
-      continue;
+  if (type.has_ctor) {
+    stream << '\t' << type.get_class_name() << "() {\n";
+    if (!type.has_dllexport) {
+      for (auto field : type.fields) {
+        if (field->is_anonymous) {
+          continue;
+        }
+        if (field->bitfield_width > -1) {
+          continue;
+        }
+        stream << "\t\tprintf(\"" << field->get_field_name()
+               << " : %llu\\n\", (unsigned long long)((size_t)&"
+               << field->get_field_name() << " - (size_t)buffer));\n";
+      }
     }
-    if (field->bitfield_width > -1) {
-      continue;
-    }
-    stream << "\t\tprintf(\"" << field->get_field_name()
-           << " : %llu\\n\", (unsigned long long)((size_t)&"
-           << field->get_field_name() << " - (size_t)buffer));\n";
+    stream << "\t}\n";
   }
-  stream << "\t}\n";
   stream << "};\n";
   if (type.packed > -1) {
     stream << "#pragma pack(pop)\n";
@@ -224,6 +231,10 @@ std::ostream &operator<<(std::ostream &stream, const Class::Method &method) {
   stream << ')';
   if (method.ret_type == TypeKind_PMF) {
     stream << ')';
+  }
+  if (method.is_pure) {
+    stream << " = 0;";
+    return stream;
   }
   stream << "{ return ";
   switch (method.ret_type) {

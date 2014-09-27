@@ -97,6 +97,7 @@ struct Class {
     TypeKind ret_type;
     int ret_type_class;
     bool is_virtual;
+    bool is_pure;
     TypeKind arg_type;
     int arg_type_class;
     friend std::ostream &operator<<(std::ostream &stream, const Method &method);
@@ -107,13 +108,17 @@ struct Class {
   int packed;
   int vtordisp;
   bool gnu_alignment_spelling;
+  bool has_ctor;
+  bool has_dllexport;
 
   Class(int ci)
       : class_i(ci),
         alignment(-1),
         packed(-1),
         vtordisp(-1),
-        gnu_alignment_spelling(false) {}
+        gnu_alignment_spelling(false),
+        has_ctor(false),
+        has_dllexport(false) {}
 
   bool is_viable_base(int new_base) const;
 
@@ -137,6 +142,14 @@ struct Class {
   void set_alignment(int align, bool gnu_style) {
     alignment = align;
     gnu_alignment_spelling = gnu_style;
+  }
+
+  void set_dllexport(bool dllexport) {
+    has_dllexport = dllexport;
+  }
+
+  void set_ctor(bool ctor) {
+    has_ctor = ctor;
   }
 
   void add_method(Method meth) {
