@@ -1,3 +1,5 @@
 add_library(support STATIC option.cc type.cc)
+target_compile_features(support PRIVATE cxx_std_11)
 add_executable(superfuzz superfuzz.cc)
+target_compile_features(superfuzz PRIVATE cxx_std_11)
 target_link_libraries(superfuzz support)
